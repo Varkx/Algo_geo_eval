@@ -302,11 +302,11 @@ class HalfedgeMesh:
 
         self.halfedges = hlist
 
-    def save_off(self, filename, vertices_values=[]):
-        with_v_colors = len(vertices_values) == len(self.vertices)
+    def save_off(self, filename, values=[]):
+        with_v_colors = len(values) == len(self.facets)
         if with_v_colors:
-            min_v_values = min(vertices_values)
-            max_v_values = max(vertices_values)
+            min_v_values = min(values)
+            max_v_values = max(values)
             if min_v_values == max_v_values:
                 max_v_values += 0.001
 
@@ -320,19 +320,23 @@ class HalfedgeMesh:
 
                 for v in self.vertices:
                     file.write(str(v.x) + " " + str(v.y) + " " + str(v.z))
-                    if with_v_colors:
-                        if vertices_values[v.index] < 0:  # composante connexe non atteinte
-                            file.write(" 255 255 0")
-                        else:
-                            x = int(255 * (vertices_values[v.index] - min_v_values) / (max_v_values - min_v_values))
-                            file.write(" 255 " + str(x) + " " + str(x))
                     file.write("\n")
+
                 for f in self.facets:
-                    file.write("3 " + str(f.a) + " " + str(f.b) + " " + str(f.c) + "\n")
-                
-                if with_v_colors:
-                        x = int(255 * (vertices_values[v.index] - min_v_values) / (max_v_values - min_v_values))
-                        file.write(" 0.0 " + "1.0" + " " + "1.0" + " 1.0" + "\n")
+                    file.write("3 " + str(f.a) + " " + str(f.b) + " " + str(f.c))
+
+                    if with_v_colors:
+                        c = color_values(values)[f.index]
+                        file.write(
+                            " " + str(c[0]) + " " + str(c[1]) + " " + str(c[2]) + " " + str(c[3]) + "\n"
+                        )
+
+        except IOError as e:
+            print("I/O error({0}): {1}".format(e.errno, e.strerror))
+            return
+        except ValueError as e:
+            print("Value error: {0}:".format(e))
+            return
 
         except IOError as e:
             print("I/O error({0}): {1}".format(e.errno, e.strerror))
@@ -411,22 +415,21 @@ class HalfedgeMesh:
         for v in valeurs :
             print((v/math.pi)*180)
        
-    """
-    Colorie chaque face d'une couleur du rouge vers le blanc en fonction de sa grandeur
-    """
-    def color_values(valeurs):
-        max_angle = max(valeurs)
-        min_angle = min(valeurs)
 
-        colors = []
+    def color_two_class(valeurs):
 
+        res = []
+        taille = len(valeurs)
+
+        moyenne = 0.0
         for v in valeurs:
-            v = (v  * 255 / 1.0)
-            g = round((math.sin(0.024 * v + 0) * 127 + 128) / 255, 3)
-            b = round((math.sin(0.024 * v + 2) * 127 + 128) / 255, 3)
+            moyenne += float(v)
+            moyenne = moyenne / taille
+        
+        for v in valeurs:
+            res.append((float(v), moyenne))
 
-            colors.append((1.0, g, b, 1.0))
-        return colors 
+        return res
 
     def ceil_fix(self):
         return 0
@@ -697,3 +700,19 @@ def create_vector(p1, p2):
     """
     return list(map((lambda x,y: x-y), p2, p1))
 
+"""
+Colorie chaque face d'une couleur du rouge vers le blanc en fonction de sa grandeur
+"""
+def color_values(valeurs):
+    max_angle = max(valeurs)
+    min_angle = min(valeurs)
+
+    colors = []
+
+    for v in valeurs:
+        v = (v  * 255 / 1.0)
+        g = round((math.sin(0.024 * v + 0) * 127 + 128) / 255, 3)
+        b = round((math.sin(0.024 * v + 2) * 127 + 128) / 255, 3)
+
+        colors.append((1.0, g, b, 1.0))
+    return colors 

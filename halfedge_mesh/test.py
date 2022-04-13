@@ -36,14 +36,13 @@ idmax2 = max(enumerate(distances2),key = lambda x: x[1])[0]
 for i in mesh.vertices:
     print(i.get_vertex())
 #save the file
-mesh.save_off("cubeteststst.off",vertices_values = distances)
+mesh.save_off("cubeteststst.off",values = distances)
 
 cc = mesh.visit()
 print(cc)
 print(mesh.calculX(cc))
 valeurs = mesh.calcul_angle_dia()
 print(valeurs)
-print(mesh.color_values(valeurs))
 
 
 
